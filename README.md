@@ -53,12 +53,22 @@ public class NaughtyWaiter implements Waiter {
 ```java
 @Before("execution(* serveTo(Object+))")
 ```
-
 >> **Tips：** 对于
 ```java
 @Before("execution(* serveTo(Object))")
 ```
 其匹配的方法的参数将**仅仅是Object类型**，不包其子类类型。
+
+7.匹配类名为aspect.NaiveWaiter，返回值任意，参数任意的类的所有方法。
+```java
+@Before("execution(* aspect.NaiveWaiter.*(..))")
+```
+
+8.匹配aspect包及其子孙包下，方法名含有serve，返回值任意，参数任意的类的方法。
+```java
+@Before("execution(* aspect..*.*serve*(..))")
+```
+
 
 ### 仅匹配参数
 如果我们仅仅需要匹配方法的参数，那么使用`args()`将更加简单。
