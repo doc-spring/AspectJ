@@ -102,4 +102,9 @@ public class NaughtyWaiter implements Waiter {
 @Before("within(aspect..*)")
 ```
 
-
+###　复合匹配
+可以使用&& || !分别表示多个匹配条件的且、或和非的逻辑关系。
+以下匹配条件将匹配Waiter及其派生类中的serveTo函数。
+```java
+@Before("execution(* serveTo(..)) && target(aspect.Waiter)")
+```
