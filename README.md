@@ -1,3 +1,75 @@
+# AspectJ AOP
+### AOP概念
+AOP(面向切面编程)作为OOP(面向对象编程)的一种补充，增强了OOP的**封装性**和**可重用性**。OOP的可重用性通常依赖于类的继承扩展实现的，最终形成一个纵向的扩展层次树。然而OOP对于横向的可重用性缺乏很好的解决办法，正因为如此，才有了AOP编程。  
+
+当程序在多出都出现相同的功能代码时，而这样的代码和业务逻辑关系又不紧密或者毫无相干。譬如对业务逻辑的函数执行前后打Log日志的代码片段，会出现在每一个业务逻辑函数的执行开始和执行结束，这一方面造成了代码的冗余，也使得对这些非业务逻辑的代码的维护变得非常困难。任何微小修改都需要每一处重复做一次，这不仅费时费力，而且极容易出错。如果我们可以将这一部分与业务逻辑关系不大的代码分离出来，将大大增加代码的可重用性和封装性。而且由于这部分代码与业务逻辑不相关，这样做使得模块内聚程度更高，模块间耦合程度更松。而这一切正是AOP所要做的事情。  
+
+AOP从本质上来说就是将那些重复的代码从业务逻辑中剥离出来，独立封装成一个类和若干方法，这样剥离出来的类和方法，被称之为**横切逻辑 / 增强(Advice)**。剥离后的业务逻辑的那些类和方法称之为**目标逻辑(Target)**。剥离的位置称之为**切点(PointCut)**。另外增强有不同的**增强类型**。因此，**AOP编程就是在正确的切点使用正确的增强类型，将横切逻辑植入目标逻辑中**。
+
+### 一个AOP的例子
+业务逻辑(即目标逻辑)的抽象接口和接口实现类如下
+```java
+public interface Waiter {
+	void greetTo(String name);
+	void serveTo(String name);
+}
+
+```
+
+```java
+public class NaiveWaiter implements Waiter {
+	public void greetTo(String name) {
+		System.out.println("greet to " + name);
+		System.out.println();
+	}
+	
+	public void serveTo(String name) {
+		System.out.println("serve to " + name);
+		System.out.println();
+	}
+}
+```
+横切逻辑如下
+```java
+@Aspect
+public class PreGreetingAdvisor {
+	
+	@Before("execution(* greetTo(..))")
+	public void beforeGreeting() {
+		System.out.println("How are you!");
+	}
+}
+```
+该横切逻辑使用了AspectJ注解方式实现的，`@Aspect`注解表示`PreGreetingAdvisor`类是一个横切逻辑类。`@Before()`表明增强类型是在目标逻辑方法前植入横切逻辑。`(* greetTo(..))")`给出了匹配的切点的描述。  
+
+接下来在xml文件中利用`aop:aspectj-autoproxy`来将横切逻辑自动植入目标逻辑中。
+```xml
+	<bean id="waiter" class="aspectJDemo.NaiveWaiter"></bean>
+	<bean class="aspectJDemo.PreGreetingAdvisor"></bean>
+	<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+```
+
+最后我们在`main`函数中来测试下我们的AOP编程的效果
+```java
+public class Main {
+	public static void main(String[] args) {
+		String configPathString = "aspectJDemo/beans.xml";
+		ApplicationContext context = new ClassPathXmlApplicationContext(configPathString);
+		Waiter waiter = (Waiter) context.getBean("waiter");
+		waiter.greetTo("Jack");
+		waiter.serveTo("Jack");
+	}
+}
+```
+运行结果如下
+```
+How are you!
+greet to Jack
+
+serve to Jack
+```
+
+
 ### 匹配注解
 可以使用`@annotation()`切点函数来匹配注解。所有含有指定注解的方法将被匹配，进而被植入横切逻辑；所有不含有指定方法的方法将被忽略。
 ```java
