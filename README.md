@@ -103,8 +103,63 @@ public class NaughtyWaiter implements Waiter {
 ```
 
 ###　复合匹配
-可以使用&& || !分别表示多个匹配条件的且、或和非的逻辑关系。
+可以使用&&、||、和!分别表示多个匹配条件的且、或和非的逻辑关系。
 以下匹配条件将匹配Waiter及其派生类中的serveTo函数。
 ```java
 @Before("execution(* serveTo(..)) && target(aspect.Waiter)")
+```
+
+### 访问连接点信息
+#### 利用JointPoint和ProceedingJointPoint访问连接点信息
+`JointPoint`可以用于横切逻辑函数访问连接点信息之用，其包括以下常用方法
+```java
+Object[] getArgs()	//获取参数列表
+Signature getSignature()	//获取方法签名
+Object getTarget()	//获取Target对象
+Object getThis()	//获取代理对象本身
+```
+`ProceedingJointPoint`继承自`JointPoint`，通常用于环绕增强(`@Arround`)。其主要新增以下方法
+```java
+Object proceed() throws Throwable	//通过反射执行Target对象在连接点处的方法
+```
+以下是使用`ProceedingJointPoint`访问连接点信息的例子，总可以通过将横切逻辑函数的第一个参数声明为`JointPoint`来获取连接点信息。
+```java
+	@Around("execution(* serveTo(..)) && target(aspect.NaiveWaiter)")
+	public void greet(ProceedingJoinPoint joinPoint) throws Throwable {
+		System.out.println("---joinPoint---");
+		
+		System.out.println("arg[0] = " + joinPoint.getArgs()[0]);
+		System.out.println("target = " + joinPoint.getTarget().getClass());
+		
+		joinPoint.proceed();
+		
+		System.out.println("---joinPoint---");
+	}
+```
+运行结果如下：
+```
+---joinPoint---
+arg[0] = Jack
+target = class aspect.NaiveWaiter
+serve to Jack with price 1000
+---joinPoint---
+```
+
+#### 绑定连接点方法传入参数
+你可能会疑惑既然`execution`那么强大，为什么还要用`args`呢？仅仅是为了一种简化？事实上`args`可以用来绑定连接点方法传入参数，从而使得横切逻辑函数可以很容易访问连接点方法的传入参数。以下给出一个例子。
+```java
+	@Before("execution(* serveTo(..)) && args(name, price)")
+	public void greet(String name, int price) throws Throwable {
+		
+		System.out.println("name = " + name);
+		System.out.println("price = " + price);
+		
+	}
+```
+`@Before("execution(* serveTo(..)) && args(name, price)")`通过`void greet(String name, int price)`获知`name`和`price`的类型，从而将匹配方法名为`serveTo`，参数为(String, int)，返回值任意的方法。并试图植入横切逻辑。`args`的强大之处在于它绑定到了连接点方法的传入参数，这使得我们直接可以在`greet(String name, int price)`横切逻辑函数中方便地使用连接点方法的传入参数。
+因此以上程序的运行结果如下
+```
+name = Jack
+price = 1000
+serve to Jack with price 1000
 ```
