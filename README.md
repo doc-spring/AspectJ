@@ -102,7 +102,7 @@ public class NaughtyWaiter implements Waiter {
 @Before("within(aspect..*)")
 ```
 
-###　复合匹配
+### 复合匹配
 可以使用&&、||、和!分别表示多个匹配条件的且、或和非的逻辑关系。
 以下匹配条件将匹配Waiter及其派生类中的serveTo函数。
 ```java
@@ -162,4 +162,57 @@ serve to Jack with price 1000
 name = Jack
 price = 1000
 serve to Jack with price 1000
+```
+
+#### 绑定连接点方法返回值
+通常用在`AfterReturning`横切类型中，通过`AfterReturning`的`returning`指定返回值对象。
+```java
+	@AfterReturning(value="target(aspect.Seller)", returning="retValue")
+	public void bindReturnValue(int retValue) {
+		System.out.println("return value = " + retValue);
+	}
+```
+
+#### 绑定抛出的异常
+必须使用在`AfterThrowing`横切类型中，通过`AfterThrowing`的`throwing`指定抛出异常对象。
+```java
+	@AfterThrowing(value="target(aspect.Seller)", throwing="exception")
+	public void bindException(IllegalArgumentException exception) {
+		System.out.println("exception:" + exception.getMessage());
+	}
+```
+以上切面将匹配aspect.Seller类运行时抛出异常类型为`IllegalArgumentException`的方法。以下为运行结果
+```
+sellBeer()
+checkBill
+exception:illegal argument
+```
+
+#### 绑定proxy对象
+可以使用`this()`或者`target()`来绑定proxy对象，此时切点函数仍然具有匹配功能。以下为一个例子
+```java
+	@Before("target(waiter)")
+	public void bindProxyObj(Waiter waiter) {
+		System.out.println(waiter.getClass().getName());
+	}
+```
+以上切面将匹配所有waiter类或其子类的方法。并且这样的proxy对象将通过`waiter`对象很容易的在横切逻辑函数中被访问。
+```
+aspect.NaiveWaiter
+greet to Jack
+
+aspect.NaiveWaiter
+serve to Jack
+
+aspect.NaiveWaiter
+serve to Jack with price 1000
+
+aspect.NaughtyWaiter
+greet to Tom
+
+aspect.NaughtyWaiter
+serve to Tom
+
+sellBeer()
+checkBill
 ```
