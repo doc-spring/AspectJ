@@ -49,6 +49,8 @@ public class PreGreetingAdvisor {
 	<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
 ```
 
+>**Tips: **`aop:aspectj-autoproxy`有一个`proxy-target-class`属性，默认为false，表示使用JDK动态代理；当设置`<aop:aspectj-autoproxy proxy-target-class='true'></aop:aspectj-autoproxy>`时，将使用CGLIB代理。需要注意的是，如果目标类没有声明接口，则即使该属性设为`false`，Spring将仍然使用CGLIB代理。
+
 最后我们在`main`函数中来测试下我们的AOP编程的效果
 ```java
 public class Main {
